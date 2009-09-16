@@ -7,105 +7,110 @@ import re
 class Candidate:
 	def __init__(self,line):
 		candidate = re.split("\s+",line.strip())
+
 		self.nickname = candidate[0]
 		self.ra = candidate[1]
 		self.dec = candidate[2]
+
+		self.remote_f1 = "/tmp/out_" + self.nickname + "_ft1.fits"
+		self.remote_f2 = "/tmp/out_" + self.nickname + "_ft2.fits"
+
 		try:
 			os.mkdir(self.nickname)
 		except OSError:
 			pass
 
-def gen_sources(candidate):
-	# genera en remoto las sources (ft1 y ft2)
-	# Input files: candidates
-	# Input parameters: ra, dec
-	remote_ft1 = "/tmp/out_" + candidate.nickname + "_ft1.fits"
-	remote_ft2 = "/tmp/out_" + candidate.nickname + "_ft2.fits"
+		self.gen_sources()
+		self.bring_sources()
+		self.delete_remote_sources()
+		self.create_friends()
+		self.create_gtselect()
+		self.create_gtmktime()
+		self.create_gtexpmap()
+		self.create_XML()
+		self.create_gtlike()
 
-	gen_ft1 = "ssh canadas@noric.slac.stanford.edu" + \
-			" /afs/slac.stanford.edu/u/gl/glast/astroserver/prod/astro " +   \
-      " --output-ft1 " + remote_ft1 + \
-      " --event-sample P6_public_v1 " + \
-      " --minEnergy 100.0 --maxEnergy 200000.0 " + \
-      " --minTimestamp 2.39557414E8 --ra " + candidate.ra +  \
-      " --dec " + candidate.dec + " --radius 10.0 --eventClass 'EVENT_CLASS = 3' store" 
-	gen_ft2 = "ssh canadas@noric.slac.stanford.edu" + \
-			" /afs/slac.stanford.edu/u/gl/glast/astroserver/prod/astro " +   \
-      " --output-ft2-30s " + remote_ft2 + \
-      " --event-sample P6_public_v1 " + \
-      " --minEnergy 100.0 --maxEnergy 200000.0 " + \
-      " --minTimestamp 2.39557414E8 --ra " + candidate.ra +  \
-      " --dec " + candidate.dec + " --radius 10.0 --eventClass 'EVENT_CLASS = 3' storeft2" 
-	#print gen_ft1
-	#print gen_ft2
-	#os.system(command)
+	def gen_sources(self):
+		# genera en remoto las sources (ft1 y ft2)
+		# Input files: candidates
+		# Input parameters: ra, dec
+		remote_ft1 = self.remote_f1
+		remote_ft2 = self.remote_f2
 
-def bring_sources(candidate):
-	# trae ft1 y ft2 a local 
-	remote_ft1 = "/tmp/out_" + candidate.nickname + "_ft1.fits"
-	remote_ft2 = "/tmp/out_" + candidate.nickname + "_ft2.fits"
-	bring_ft1 = "scp canadas@noric.slac.stanford.edu:" + remote_ft1 + " " + candidate.nickname + "/ "
-	bring_ft2 = "scp canadas@noric.slac.stanford.edu:" + remote_ft2 + " " + candidate.nickname + "/ "
-	print bring_ft1
-	print bring_ft2
+		gen_ft1 = "ssh canadas@noric.slac.stanford.edu" + \
+				" /afs/slac.stanford.edu/u/gl/glast/astroserver/prod/astro " +   \
+				" --output-ft1 " + remote_ft1 + \
+				" --event-sample P6_public_v1 " + \
+				" --minEnergy 100.0 --maxEnergy 200000.0 " + \
+				" --minTimestamp 2.39557414E8 --ra " + self.ra +  \
+				" --dec " + self.dec + " --radius 10.0 --eventClass 'EVENT_CLASS = 3' store" 
+		gen_ft2 = "ssh canadas@noric.slac.stanford.edu" + \
+				" /afs/slac.stanford.edu/u/gl/glast/astroserver/prod/astro " +   \
+				" --output-ft2-30s " + remote_ft2 + \
+				" --event-sample P6_public_v1 " + \
+				" --minEnergy 100.0 --maxEnergy 200000.0 " + \
+				" --minTimestamp 2.39557414E8 --ra " + self.ra +  \
+				" --dec " + self.dec + " --radius 10.0 --eventClass 'EVENT_CLASS = 3' storeft2" 
+		print gen_ft1
+		print gen_ft2
 
-def delete_remote_sources(candidate):
-	remote_ft1 = "/tmp/out_" + candidate.nickname + "_ft1.fits"
-	remote_ft2 = "/tmp/out_" + candidate.nickname + "_ft2.fits"
-	rm_ft1 = "ssh canadas@noric.slac.stanford.edu rm " + remote_ft1
-	rm_ft2 = "ssh canadas@noric.slac.stanford.edu rm " + remote_ft2
-	print rm_ft1
-	print rm_ft2
+	def bring_sources(self):
+		# trae ft1 y ft2 a local 
+		remote_ft1 = self.remote_f1
+		remote_ft2 = self.remote_f2
+		bring_ft1 = "scp canadas@noric.slac.stanford.edu:" + remote_ft1 + " " + self.nickname + "/ "
+		bring_ft2 = "scp canadas@noric.slac.stanford.edu:" + remote_ft2 + " " + self.nickname + "/ "
+		print bring_ft1
+		print bring_ft2
 
-def create_friends():
-	# ejecuta region_sources.f (necesitamos expect)
-	# Input files: candidates
-	# Input parameters: 
-	pass
+	def delete_remote_sources(self):
+		remote_ft1 = self.remote_f1
+		remote_ft2 = self.remote_f2
+		rm_ft1 = "ssh canadas@noric.slac.stanford.edu rm " + remote_ft1
+		rm_ft2 = "ssh canadas@noric.slac.stanford.edu rm " + remote_ft2
+		print rm_ft1
+		print rm_ft2
 
-def create_gtselect(candidate):
-	# ejecutamos gtselect
-	# Input files:
-	# Input parameters:
-	cmd = "gtselect infile=./" + candidate.nickname + "/"+ candidate.nickname +"-ft1.fits outfile=" + candidate.nickname + "-ft1_select.fits ra="+candidate.ra+" dec="+candidate.dec+" rad=10 tmin=239557418 tmax=272363953 emin=100 emax=200000 zmax=105 clobber=yes"
-	print cmd
+	def create_friends(self):
+		# ejecuta region_sources.f (necesitamos expect)
+		# Input files: candidates
+		# Input parameters: 
+		pass
 
-def create_gtmktime():
-	# ejecutamos gtmktime
-	# Input files:
-	# Input parameters:
-	pass
+	def create_gtselect(self):
+		# ejecutamos gtselect
+		# Input files:
+		# Input parameters:
+		cmd = "gtselect infile=./" + self.nickname + "/"+ self.nickname +"-ft1.fits outfile=" + self.nickname + "-ft1_select.fits ra=" + self.ra + " dec=" + self.dec + " rad=10 tmin=239557418 tmax=272363953 emin=100 emax=200000 zmax=105 clobber=yes"
+		print cmd
 
-def create_gtexpmap():
-	# ejecutamos gtexpmap
-	# Input files:
-	# Input parameters:
-	pass
+	def create_gtmktime(self):
+		# ejecutamos gtmktime
+		# Input files:
+		# Input parameters:
+		pass
 
-def create_XML():
-	# creamos archivo XML
-	# Input files:
-	# Input parameters:
-	pass
+	def create_gtexpmap(self):
+		# ejecutamos gtexpmap
+		# Input files:
+		# Input parameters:
+		pass
 
-def create_gtlike():
-	#creamos gtlike
-	# Input files:
-	# Input parameters:
-	pass
+	def create_XML(self):
+		# creamos archivo XML
+		# Input files:
+		# Input parameters:
+		pass
+
+	def create_gtlike(self):
+		#creamos gtlike
+		# Input files:
+		# Input parameters:
+		pass
 
 c = open('candidates')
 for line in c:
 	candidate = Candidate(line)
-	gen_sources(candidate)
-	bring_sources(candidate)
-	delete_remote_sources(candidate)
-	create_friends()
-	create_gtselect(candidate)
-	create_gtmktime()
-	create_gtexpmap()
-	create_XML()
-	create_gtlike()
 	break
 	
 
