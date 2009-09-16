@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-#from subprocess import Popen
 import os
 from pprint import pprint
 import re
